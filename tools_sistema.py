@@ -190,6 +190,8 @@ def controlar_sistema(accion: str, parametro: str = "", contenido: str = "", con
                 exe_name = "brave.exe"
             elif "vsc" in programa or "code" in programa or "visual studio" in programa:
                 exe_name = "Code.exe"
+            elif programa in ["ea", "ea app", "ea desktop"] or "electronic arts" in programa:
+                exe_name = "EADesktop.exe"
             else:
                 # Si no es conocido, usar lo que dio el LLM y asegurar que acabe en .exe
                 exe_name = programa
