@@ -598,7 +598,7 @@ async def process_command(request: CommandRequest):
     global historial_conversacion
     
     command = request.command
-    print(f"\n[🧠] Evaluando: '{command}'")
+    print(f"\n[CEREBRO] Evaluando: '{command}'")
     
     # Añadir comando del usuario al historial
     agregar_al_historial("user", command)
@@ -653,35 +653,56 @@ async def process_command(request: CommandRequest):
                 tool_choice="auto"
             )
             estado_cerebro = {
-                "modelo_activo": "⚡ Gemini 2.0 Flash",
+                "modelo_activo": "FLASH Gemini 2.0 Flash",
                 "tokens_restantes": "∞",
                 "tokens_limite": "1500 req/día",
                 "porcentaje": 100,
                 "recarga_en": "Disponible"
             }
-            print("[⚡ Cerebro] Gemini 2.0 Flash")
-        except Exception:
+            print("[FLASH Cerebro] Gemini 2.0 Flash")
+        except Exception as e:
+            print(f"[Error Gemini] {e}")
             response = None
         
         # Si Gemini falló, usar cerebro de reserva
         if response is None:
-            print("[🔋 Cerebro] Llama 3.3 70B (Reserva)")
+            print("[RESERVA Cerebro] Llama 3.3 70B (Reserva)")
             usando_reserva = True
             estado_cerebro = {
-                "modelo_activo": "🔋 Llama 3.3 70B (Reserva)",
+                "modelo_activo": "RESERVA Llama 3.3 70B (Reserva)",
                 "tokens_restantes": "?",
                 "tokens_limite": "?",
                 "porcentaje": 50,
                 "recarga_en": "Usando Groq"
             }
             
-            response = await asyncio.to_thread(client_reserva.chat.completions.create, 
-                model="llama-3.3-70b-versatile",
-                messages=mensajes_grok,
-                tools=[spotify_tool, sistema_tool, internet_tool, vision_tool, clic_visual_tool, clic_fondo_tool, estado_tool, widget_tool, cerrar_widget_tool, memoria_tool, obs_tool, seguridad_tool, vigilante_pantalla_tool],
-                tool_choice="auto"
-            )
-        
+            try:
+                response = await asyncio.to_thread(client_reserva.chat.completions.create, 
+                    model="llama-3.3-70b-versatile",
+                    messages=mensajes_grok,
+                    tools=[spotify_tool, sistema_tool, internet_tool, vision_tool, clic_visual_tool, clic_fondo_tool, estado_tool, widget_tool, cerrar_widget_tool, memoria_tool, obs_tool, seguridad_tool, vigilante_pantalla_tool],
+                    tool_choice="auto"
+                )
+            except Exception as e:
+                print(f"[Error Sistema] Llama 3.3 falló: {e}")
+                print("[RESERVA Cerebro 2] Intentando con Llama 3.1 8B (Reserva 2)")
+                try:
+                    response = await asyncio.to_thread(client_reserva.chat.completions.create, 
+                        model="llama-3.1-8b-instant",
+                        messages=mensajes_grok,
+                        tools=[spotify_tool, sistema_tool, internet_tool, vision_tool, clic_visual_tool, clic_fondo_tool, estado_tool, widget_tool, cerrar_widget_tool, memoria_tool, obs_tool, seguridad_tool, vigilante_pantalla_tool],
+                        tool_choice="auto"
+                    )
+                except Exception as e2:
+                    print(f"[Error Sistema] Llama 3.1 8B también falló: {e2}")
+                    response = None
+
+        if response is None:
+            # Todos los cerebros fallaron (Rate limit, sin internet, etc.)
+            error_msg = "Lo siento señor, todos mis cerebros de procesamiento han agotado sus cuotas de uso o fallado. Por favor revise las API keys o intente más tarde."
+            agregar_al_historial("assistant", error_msg)
+            return {"status": "success", "respuesta_texto": error_msg}
+            
         message = response.choices[0].message
         
         # === PARSER DE RESCATE ===
@@ -763,7 +784,7 @@ async def process_command(request: CommandRequest):
                                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}}
                                     ]
                                 })
-                                print(f"[🧠] Evaluando captura en Reserva con visión (segunda vuelta)...")
+                                print(f"[CEREBRO] Evaluando captura en Reserva con visión (segunda vuelta)...")
                                 try:
                                     segunda_response = await asyncio.to_thread(client_reserva.chat.completions.create, 
                                         model="meta-llama/llama-4-scout-17b-16e-instruct",
@@ -786,7 +807,7 @@ async def process_command(request: CommandRequest):
                             mensajes_grok.append({"role": "assistant", "content": texto_raw})
                             mensajes_grok.append({"role": "user", "content": f"Resultado de la búsqueda:\n{resultado}\nResponde de forma natural al usuario."})
                             
-                            print(f"[🧠] Evaluando resultados de internet en Reserva (segunda vuelta)...")
+                            print(f"[CEREBRO] Evaluando resultados de internet en Reserva (segunda vuelta)...")
                             try:
                                 segunda_response = await asyncio.to_thread(client_reserva.chat.completions.create, 
                                     model="llama-3.1-8b-instant",
@@ -879,7 +900,7 @@ async def process_command(request: CommandRequest):
                     mensajes_grok.append({"role": "assistant", "content": texto_raw})
                     mensajes_grok.append({"role": "user", "content": f"Resultado de internet: {resultado}"})
                     
-                    print(f"[🧠] Evaluando resultados de internet en Reserva (segunda vuelta)...")
+                    print(f"[CEREBRO] Evaluando resultados de internet en Reserva (segunda vuelta)...")
                     segunda_response = await asyncio.to_thread(client_reserva.chat.completions.create, 
                         model="llama-3.3-70b-versatile",
                         messages=mensajes_grok
@@ -1095,7 +1116,7 @@ async def process_command(request: CommandRequest):
 
 
             if requiere_segunda_vuelta:
-                print(f"[🧠] Evaluando resultados de herramientas (segunda vuelta)...")
+                print(f"[CEREBRO] Evaluando resultados de herramientas (segunda vuelta)...")
                 segunda_response = None
                 
                 if usando_reserva:
@@ -1113,7 +1134,7 @@ async def process_command(request: CommandRequest):
                     )
                     # Si hay imágenes, usar modelo con visión; si no, el rápido de texto
                     modelo_reserva = "meta-llama/llama-4-scout-17b-16e-instruct" if tiene_imagenes else "llama-3.3-70b-versatile"
-                    print(f"[🔋 Cerebro Reserva] Usando {modelo_reserva} para segunda vuelta")
+                    print(f"[RESERVA Cerebro Reserva] Usando {modelo_reserva} para segunda vuelta")
                     try:
                         segunda_response = await asyncio.to_thread(client_reserva.chat.completions.create, 
                             model=modelo_reserva,
@@ -1361,7 +1382,7 @@ def _vigilante_pantalla_loop():
     import tools_vision
     import time
     
-    print("[Vigilante] 👁️ Iniciando vigilante de pantalla silencioso (cada 5 min)...")
+    print("[Vigilante] OJO Iniciando vigilante de pantalla silencioso (cada 5 min)...")
     while _vigilante_pantalla_activo:
         # Esperar 5 minutos (300 segundos) entre chequeos
         for _ in range(300):

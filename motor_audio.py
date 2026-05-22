@@ -168,7 +168,7 @@ def escuchar_continuo(callback_ui=None):
                             # Estaba hibernando, despertar sistemas
                             jarvis_activo = True
                             print("\n" + "═"*40)
-                            print(" ⚡ INICIANDO SISTEMAS Jarvis...")
+                            print(" FLASH INICIANDO SISTEMAS Jarvis...")
                             print("  ├ Cerebro: ONLINE")
                             print("  ├ Escucha: ONLINE")
                             print("  └ Todos los sistemas operativos.")
@@ -179,19 +179,19 @@ def escuchar_continuo(callback_ui=None):
                             # winsound.Beep(1200, 150)
                             
                             hablar("Sistemas en línea. Cerebro cargado. ¿En qué te ayudo, señor?")
-                            print(f"\n[🎧] Jarvis a la escucha de comandos... (Palabra: 'Jarvis')\n")
+                            print(f"\n[AURICULARES] Jarvis a la escucha de comandos... (Palabra: 'Jarvis')\n")
                             # Limpiar cola para no acumular ruido de la respuesta TTS
                             while not q.empty():
                                 q.get()
                         else:
                             # Estaba activo, listo para capturar un comando
-                            print(f"\n[🎙️] ¡Jarvis detectado! (conf: {conf:.2f})")
+                            print(f"\n[MIC] ¡Jarvis detectado! (conf: {conf:.2f})")
                             
                             # Pitidos desactivados para evitar bucle de retroalimentación en el micrófono
                             # winsound.Beep(1000, 80)
                             # winsound.Beep(1300, 80)
                             
-                            print("[🎙️] Grabando comando...")
+                            print("[MIC] Grabando comando...")
                             estado_escucha = "grabando_comando"
                             audio_chunks = []
                             max_energia_grabada = 0.0
@@ -211,11 +211,11 @@ def escuchar_continuo(callback_ui=None):
                         
                     # Detener grabación si hay silencio continuo o si pasaron más de 12 segundos (timeout de seguridad)
                     if (time.time() - ultimo_sonido > SILENCIO_PARA_CORTAR) or (time.time() - inicio_grabacion > 12.0):
-                        print("[🎙️] Procesando comando grabado...")
+                        print("[MIC] Procesando comando grabado...")
                         audio_completo = np.concatenate(audio_chunks, axis=0)
                         duracion = len(audio_completo) / RATE
                         
-                        print(f"[🎙️] Grabación finalizada. Duración: {duracion:.1f}s | Energía máx: {max_energia_grabada:.0f} (Umbral: {UMBRAL_VOZ})")
+                        print(f"[MIC] Grabación finalizada. Duración: {duracion:.1f}s | Energía máx: {max_energia_grabada:.0f} (Umbral: {UMBRAL_VOZ})")
                         
                         if duracion >= DURACION_MINIMA:
                             print(f"[⚙️] Transcribiendo y pensando...")
@@ -319,7 +319,7 @@ def enviar_comando_a_cerebro(texto):
         if respuesta.status_code == 200:
             datos = respuesta.json()
             texto_respuesta = datos.get('respuesta_texto', '')
-            print(f"[🧠] Jarvis: {texto_respuesta}")
+            print(f"[CEREBRO] Jarvis: {texto_respuesta}")
             
             # Solo hablar si el servidor NO habló ya (preview de herramientas)
             if not datos.get('ya_hablado', False):
@@ -332,13 +332,13 @@ def enviar_comando_a_cerebro(texto):
 
 def iniciar_cliente():
     print("\n" + "═"*40)
-    print(" 🧠 Jarvis - Sistema de IA Activo")
-    print(" 🔊 Escuchando por voz: 'Jarvis'")
+    print(" CEREBRO Jarvis - Sistema de IA Activo")
+    print(" AUDIO Escuchando por voz: 'Jarvis'")
     print(" ⌨️  Atajo de teclado global: [Ctrl + Alt + J]")
     print(" Listo para recibir comandos. (Ctrl+C para salir)")
     print("═"*40 + "\n")
     
-    print("[🎧] Jarvis a la escucha...\n")
+    print("[AURICULARES] Jarvis a la escucha...\n")
     
     try:
         escuchar_continuo()

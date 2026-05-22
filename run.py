@@ -4,7 +4,7 @@ import sys
 
 def iniciar_todo():
     print("================================================")
-    print("🚀 Iniciando el sistema completo de Jarvis...")
+    print("ROCKET Iniciando el sistema completo de Jarvis...")
     print("================================================\n")
     
     import os

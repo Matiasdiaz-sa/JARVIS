@@ -128,7 +128,7 @@ class AgendaWidget(QWidget):
         painter.setPen(QPen(QColor(200, 200, 220, 230)))
         font_title = QFont("Segoe UI", 11, QFont.Weight.Bold)
         painter.setFont(font_title)
-        painter.drawText(15, 28, "⏳ Agenda de Jarvis")
+        painter.drawText(15, 28, "RELOJ Agenda de Jarvis")
         
         # Línea separadora
         painter.setPen(QPen(QColor(255, 255, 255, 30), 1))

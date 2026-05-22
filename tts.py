@@ -116,7 +116,7 @@ def _hablar_elevenlabs(texto: str) -> bool:
                 f.write(chunk)
         
         def run_audio():
-            print("[TTS] 🎙️ Usando voz premium (ElevenLabs)")
+            print("[TTS] MIC Usando voz premium (ElevenLabs)")
             _reproducir_audio(archivo_temp)
             try:
                 os.remove(archivo_temp)
@@ -173,9 +173,26 @@ def hablar(texto: str):
     if not texto or len(texto.strip()) < 2:
         return
     
+    import re
     # Limpiar el texto para la voz
-    texto_limpio = texto.replace("🎵", "").replace("🤖", "").replace("⚡", "").replace("🧠", "").replace("🔋", "").strip()
+    texto_limpio = texto.replace("MUSICA", "").replace("🤖", "").replace("FLASH", "").replace("CEREBRO", "").replace("RESERVA", "").strip()
     
+    # Remover bloques de código Markdown (```...```) y código inline (`...`)
+    texto_limpio = re.sub(r'```.*?```', '', texto_limpio, flags=re.DOTALL)
+    texto_limpio = re.sub(r'`.*?`', '', texto_limpio)
+    
+    # Remover URLs
+    texto_limpio = re.sub(r'http[s]?://\S+', '', texto_limpio)
+    
+    # Remover caracteres especiales que el TTS leería de forma literal (corchetes, llaves, slash, etc)
+    texto_limpio = re.sub(r'[{}\[\]/\\<>\*#_~|]', '', texto_limpio)
+    
+    # Eliminar múltiples espacios o saltos de línea
+    texto_limpio = re.sub(r'\s+', ' ', texto_limpio).strip()
+    
+    if not texto_limpio:
+        return
+        
     # Usar directamente la voz de Microsoft (Edge-TTS)
     _hablar_edge_tts(texto_limpio)
 
