@@ -1,5 +1,4 @@
-# JARVISSS
-
+# JARVIS
 Un asistente de Inteligencia Artificial Avanzado e interactivo con una arquitectura multicerebro (Claude 4.6 Sonnet como principal, con respaldos locales y en la nube), diseñado para controlar el sistema operativo, gestionar herramientas y responder a peticiones con su propia interfaz visual, notificaciones de voz e integraciones.
 
 ---
