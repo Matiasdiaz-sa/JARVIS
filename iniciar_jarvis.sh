@@ -8,17 +8,32 @@ export PYTHONIOENCODING=utf-8
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$DIR"
 
-# Determinar el ejecutable de Python (usar el del entorno virtual si existe)
-PYTHON_EXE="python3"
-if [ -f "venv/bin/python3" ]; then
-    PYTHON_EXE="venv/bin/python3"
+echo "Iniciando JARVISSS..."
+
+# Activar el entorno virtual automáticamente
+if [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
 fi
 
-echo "Iniciando JARVISSS en segundo plano..."
+# Determinar el ejecutable de Python
+PYTHON_EXE="python3.11"
 
-# Ejecutar los scripts en segundo plano (equivalente a 'start ""' en .bat)
-nohup $PYTHON_EXE main.py > main.log 2>&1 &
-nohup $PYTHON_EXE ui_jarvis.py > ui_jarvis.log 2>&1 &
-nohup $PYTHON_EXE motor_proactivo.py > motor_proactivo.log 2>&1 &
+# Iniciar los componentes en el fondo
+$PYTHON_EXE main.py > main.log 2>&1 &
+PID_MAIN=$!
 
-echo "JARVISSS iniciado. Los registros se guardan en *.log"
+$PYTHON_EXE motor_proactivo.py > motor_proactivo.log 2>&1 &
+PID_PROACTIVO=$!
+
+# Iniciar la Cara de Jarvis (interfaz web) en primer plano para mantener la terminal abierta
+echo "Cerebro y Motor Proactivo iniciados."
+echo "Iniciando Cliente de Cara..."
+echo "Puedes acceder a la cara en http://localhost:8001"
+echo "Cierra esta ventana para apagar a JARVIS."
+
+$PYTHON_EXE cliente_cara.py
+
+# Al cerrar la cara con Ctrl+C (o cerrar la terminal), matar los procesos de fondo
+kill $PID_MAIN
+kill $PID_PROACTIVO
+echo "Jarvis apagado correctamente."
