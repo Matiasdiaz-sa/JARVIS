@@ -11,8 +11,8 @@ pygame-ce==2.5.0
 sounddevice==0.4.7
 openai==1.35.3
 numpy==1.26.4
-pycaw==2.0.2
-comtypes==1.4.9
+pycaw==2.0.2; sys_platform == 'win32'
+comtypes==1.4.9; sys_platform == 'win32'
 screen-brightness-control==0.23.0
 PyQt6==6.7.0
 openrgb-python==0.3.0
