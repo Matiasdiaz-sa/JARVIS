@@ -107,7 +107,14 @@ def controlar_playback(accion: str, busqueda: str = ""):
                 track_name = tracks[0]['name']
                 artist_name = tracks[0]['artists'][0]['name']
                 
-                sp.start_playback(device_id=device_id, uris=[track_uri])
+                # Intentar con API web, si falla usar startfile como fallback
+                try:
+                    sp.start_playback(device_id=device_id, uris=[track_uri])
+                except Exception as ex:
+                    print(f"[Spotify] API falló ({ex}). Usando startfile...")
+                    import os as _os
+                    _os.startfile(track_uri)
+                    
                 return f"Reproduciendo '{track_name}' de {artist_name}."
             else:
                 return f"No se encontraron resultados para: {busqueda}"

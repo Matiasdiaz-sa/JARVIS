@@ -160,7 +160,7 @@ class JarvisWidget(QWidget):
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(QBrush(self.current_render_color))
-        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setPen(Qt.GlobalColor.transparent)
         r = 8 + (vol / 50.0) * 8
         painter.drawEllipse(QPointF(16, 16), r, r)
         painter.end()
@@ -264,7 +264,7 @@ class JarvisWidget(QWidget):
                 
                 self.target_radii[i] = self.base_radius + onda1 + onda2 + latido
         elif self.modo_vigilante_pantalla:
-            target_color = self.color_vigilante
+            target_color = self.color_idle
             # Forma de Orbe Base Fluido
             onda_respiracion = math.sin(self.time_counter * 0.5) * 2
             for i in range(self.num_points):
@@ -340,7 +340,7 @@ class JarvisWidget(QWidget):
         grad.setColorAt(0.4, base_color)             # Color base
         grad.setColorAt(1.0, base_color.darker(200)) # Sombra profunda
         
-        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setPen(Qt.GlobalColor.transparent)
         painter.setBrush(QBrush(grad))
         painter.drawPath(path)
         

@@ -10,4 +10,4 @@ if exist "venv\Scripts\pythonw.exe" (
 
 start "" %PYTHON_EXE% main.py
 start "" %PYTHON_EXE% ui_jarvis.py
-
+start "" %PYTHON_EXE% motor_proactivo.py

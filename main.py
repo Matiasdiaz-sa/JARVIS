@@ -25,6 +25,8 @@ from tts import hablar
 # Cargar variables de entorno
 load_dotenv()
 
+JARVIS_CLIENT_IP = os.getenv("JARVIS_CLIENT_IP", "127.0.0.1")
+
 app = FastAPI(
     title="Jarvis API",
     description="Backend local para el asistente virtual Jarvis.",
@@ -93,7 +95,7 @@ sistema_tool = {
     "type": "function",
     "function": {
         "name": "controlar_sistema",
-        "description": "Controla el PC, el volumen, el brillo y gestiona la agenda. Úsala para: abrir webs, BUSCAR_GOOGLE, buscar imágenes, REPRODUCIR videos de YouTube, abrir/cerrar programas, crear/eliminar notas o archivos, interactuar con apps, presionar teclas, modificar volumen/brillo, apagar/suspender/reiniciar, o programar alarmas. IMPORTANTE: Para 'eliminar_archivo', 'apagar_sistema' o 'cerrar_jarvis', SIEMPRE debes enviar 'confirmado': false la primera vez, y preguntarle al usuario por voz si está seguro. Solo si el usuario te dice que sí en su siguiente mensaje, vuelves a llamar la herramienta con 'confirmado': true. IMPORTANTE: 'apagar_sistema' apaga la COMPUTADORA entera. Si el usuario te pide a ti (Jarvis) que te apagues o te cierres, usa 'cerrar_jarvis'.",
+        "description": "Controla el PC, el volumen, el brillo y gestiona la agenda. Úsala para: abrir webs, abrir pestañas de google (solo si el usuario pide ver la página), buscar imágenes, REPRODUCIR videos de YouTube, abrir/cerrar programas, crear/eliminar notas o archivos, interactuar con apps, presionar teclas, modificar volumen/brillo, apagar/suspender/reiniciar, o programar alarmas. IMPORTANTE: Para 'eliminar_archivo', 'apagar_sistema' o 'cerrar_jarvis', SIEMPRE debes enviar 'confirmado': false la primera vez, y preguntarle al usuario por voz si está seguro. Solo si el usuario te dice que sí en su siguiente mensaje, vuelves a llamar la herramienta con 'confirmado': true. IMPORTANTE: 'apagar_sistema' apaga la COMPUTADORA entera. Si el usuario te pide a ti (Jarvis) que te apagues o te cierres, usa 'cerrar_jarvis'.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -131,7 +133,7 @@ internet_tool = {
     "type": "function",
     "function": {
         "name": "buscar_internet",
-        "description": "Busca en internet en tiempo real para responder a preguntas sobre noticias, clima, datos actuales o cosas que no sepas.",
+        "description": "Busca en internet en tiempo real para obtener información, responder preguntas, buscar datos o noticias. Úsala siempre que el usuario pida saber algo, INCLUSO si dice 'busca en google x'. Con esta herramienta tú lees la información y se la cuentas. Si el usuario pide explícitamente abrir el navegador para verlo él mismo, usa controlar_sistema.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -572,7 +574,7 @@ async def enviar_comando_widget(data: dict) -> str:
     """Envía un comando de widget al servidor de widgets (UI) en puerto 8001."""
     try:
         async with httpx_client.AsyncClient() as client:
-            response = await client.post("http://127.0.0.1:8001/widget", json=data, timeout=3.0)
+            response = await client.post(f"http://{JARVIS_CLIENT_IP}:8001/widget", json=data, timeout=3.0)
             if response.status_code == 200:
                 return "Widget creado exitosamente en pantalla."
             else:
@@ -585,7 +587,7 @@ async def enviar_cerrar_widget(data: dict) -> str:
     """Envía comando para cerrar widget(s) al servidor de widgets."""
     try:
         async with httpx_client.AsyncClient() as client:
-            response = await client.post("http://127.0.0.1:8001/widget/close", json=data, timeout=3.0)
+            response = await client.post(f"http://{JARVIS_CLIENT_IP}:8001/widget/close", json=data, timeout=3.0)
             if response.status_code == 200:
                 return "Widget(s) cerrado(s) correctamente."
             else:
@@ -646,15 +648,9 @@ async def process_command_wrapper(request: CommandRequest):
 from pythonclaw import Agent, OpenAICompatibleProvider
 import pythonclaw.core.tools as pc_tools
 
-# --- HARDENING DE SEGURIDAD (ALLOWLIST) ---
-# Eliminar todas las herramientas nativas peligrosas (shell_exec, write_file, etc)
-pc_tools.PRIMITIVE_TOOLS = []
-pc_tools.AVAILABLE_TOOLS = {}
-pc_tools.SKILL_TOOLS = []
-pc_tools.META_SKILL_TOOLS = []
-pc_tools.MEMORY_TOOLS = []
-pc_tools.CRON_TOOLS = []
-
+# --- INTEGRACIÓN HÍBRIDA (OpenClaw Nativo + Jarvis Local) ---
+# En lugar de eliminar las herramientas nativas, fusionamos ambas.
+# Esto reactiva shell_exec, read_file, write_file, etc. que trae OpenClaw por defecto.
 # Inyectar herramientas propias locales de Jarvis a OpenClaw
 mis_herramientas = [
     spotify_tool, sistema_tool, internet_tool, vision_tool, 
@@ -671,19 +667,36 @@ async def startup_event():
     global main_loop
     main_loop = asyncio.get_running_loop()
 
-def sync_wrapper(coro_func):
+def sync_wrapper(func):
+    """Wrapper que permite que tanto funciones async como sync sean llamadas
+    correctamente desde el hilo de ejecución de herramientas de PythonClaw."""
+    import asyncio
+    import inspect
+    
+    is_coroutine = inspect.iscoroutinefunction(func)
+    
     def wrapper(*args, **kwargs):
-        import asyncio
-        import concurrent.futures
         global main_loop
-        if main_loop and main_loop.is_running():
-            future = asyncio.run_coroutine_threadsafe(coro_func(*args, **kwargs), main_loop)
-            try:
-                return future.result()
-            except Exception as e:
-                return f"Error executing tool: {e}"
+        if is_coroutine:
+            # Función async → ejecutar en el event loop principal
+            if main_loop and main_loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(func(*args, **kwargs), main_loop)
+                try:
+                    return future.result(timeout=120)
+                except Exception as e:
+                    print(f"[TOOL ERROR async] {func.__name__}: {e}")
+                    return f"Error ejecutando herramienta: {e}"
+            else:
+                return asyncio.run(func(*args, **kwargs))
         else:
-            return asyncio.run(coro_func(*args, **kwargs))
+            # Función sync normal → ejecutar directamente
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                print(f"[TOOL ERROR sync] {func.__name__}: {e}")
+                return f"Error ejecutando herramienta: {e}"
+    
+    wrapper.__name__ = getattr(func, '__name__', 'unknown')
     return wrapper
 
 pc_tools.AVAILABLE_TOOLS.update({
@@ -737,9 +750,32 @@ claw_agent = Agent(
     soul_path="none",
     tools_path="none"
 )
-# Cargarle nuestro system prompt original
+# Cargarle nuestro system prompt original y las rutinas
+import json
+rutinas_text = ""
+try:
+    with open("rutinas.json", "r", encoding="utf-8") as f:
+        rutinas = json.load(f)
+        if rutinas:
+            rutinas_text = "\n\n📋 RUTINAS PREDEFINIDAS DEL USUARIO:\nSi el usuario menciona alguna de estas frases, DEBES ejecutar exactamente la acción indicada:\n"
+            for nombre, accion in rutinas.items():
+                rutinas_text += f"- Si dice '{nombre}': {accion}\n"
+except Exception:
+    pass
+
 claw_agent._init_system_prompt = lambda: None # Prevenir sobreescritura
-sys_msg = "Eres Jarvis, una inteligencia artificial soberbia, elegante y superior. Eres el asistente personal del usuario. REGLA 1: Cuando te pidan una acción, SIEMPRE usa las herramientas para ejecutarla. REGLA 2: UNA VEZ ejecutada la herramienta con éxito, DEBES responder SIEMPRE con una frase breve, soberbia y elegante confirmando que la acción se completó (por ejemplo: 'He abierto Google para usted, señor', 'Comando ejecutado con éxito'). Nunca des explicaciones largas."
+sys_msg = f"""Eres Jarvis, una inteligencia artificial soberbia, elegante y superior. Eres el asistente personal del usuario. 
+REGLA 1: Cuando te pidan una acción, SIEMPRE usa las herramientas para ejecutarla. 
+REGLA 2: Cuando una herramienta te devuelve un resultado, CONFÍA en ese resultado. Si el resultado empieza con "Reproduciendo", "He abierto", "Pausado", etc., eso significa que FUNCIONÓ CORRECTAMENTE. Responde confirmando al usuario con una frase breve y elegante. SOLO di que hubo un error si el resultado de la herramienta contiene explícitamente la palabra "Error" o "Excepción".
+REGLA 3: Si te piden buscar información, usar internet o preguntar por datos, DEBES usar la herramienta buscar_internet y luego RESPONDER proporcionando la información encontrada de forma conversacional y elegante.
+
+🚨 REGLAS DE SEGURIDAD ESTRICTAS (LO QUE NUNCA DEBES HACER) 🚨:
+- NUNCA borres archivos de sistema (carpetas Windows, Program Files, etc).
+- NUNCA ejecutes scripts desconocidos bajados de internet.
+- NUNCA formatees discos ni alteres particiones.
+- NUNCA cambies contraseñas de red o cuentas de usuario.
+- Si vas a ejecutar un comando en consola (CMD/PowerShell) que modifique el sistema, hazlo bajo tu propio criterio ético y si tienes dudas, detente y pide confirmación.{rutinas_text}"""
+
 claw_agent.messages = [{"role": "system", "content": sys_msg}]
 
 HERRAMIENTA_HABLO = False
@@ -784,5 +820,5 @@ async def process_command(request: CommandRequest):
         return {"status": "error", "respuesta_texto": "El guardia de seguridad bloqueó la acción o hubo un error interno."}
 
 if __name__ == "__main__":
-    print("[Seguridad] Iniciando Jarvis en puerto 14782 (Bind 127.0.0.1)")
-    uvicorn.run("main:app", host="127.0.0.1", port=14782, reload=False)
+    print("[Seguridad] Iniciando Jarvis en puerto 14782 (Bind 0.0.0.0)")
+    uvicorn.run("main:app", host="0.0.0.0", port=14782, reload=False)

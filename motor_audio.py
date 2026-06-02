@@ -12,6 +12,7 @@ from openai import OpenAI
 from tts import hablar
 
 load_dotenv()
+JARVIS_SERVER_IP = os.getenv("JARVIS_SERVER_IP", "127.0.0.1")
 
 LOCK_FILE = os.path.join(tempfile.gettempdir(), "jarvis_speaking.lock")
 
@@ -44,6 +45,21 @@ jarvis_activo = True
 def calcular_energia(audio_data):
     """Calcula el nivel de energía (volumen) de un bloque de audio."""
     return np.sqrt(np.mean(audio_data.astype(np.float32) ** 2))
+
+def obtener_contexto_pantalla():
+    """Lee el contexto de la pantalla guardado por motor_proactivo.py si es reciente."""
+    try:
+        if os.path.exists("contexto_pantalla.txt"):
+            import time
+            # Solo usa el contexto si tiene menos de 2 minutos de antigüedad
+            if time.time() - os.path.getmtime("contexto_pantalla.txt") < 120:
+                with open("contexto_pantalla.txt", "r", encoding="utf-8") as f:
+                    ctx = f.read().strip()
+                if ctx:
+                    return f"[Contexto visual actual de su pantalla (solo info de fondo): El usuario está {ctx}] "
+    except Exception:
+        pass
+    return ""
 
 
 def escuchar_continuo(callback_ui=None):
@@ -80,6 +96,7 @@ def escuchar_continuo(callback_ui=None):
         ultimo_sonido = time.time()
         inicio_grabacion = time.time()
         max_energia_grabada = 0.0
+        tiempo_ultimo_comando = 0.0
         
         def forzar_grabacion():
             nonlocal estado_escucha, audio_chunks, ultimo_sonido, max_energia_grabada
@@ -121,6 +138,7 @@ def escuchar_continuo(callback_ui=None):
                             q.get()
                         sd.sleep(50)
                         ultimo_bloqueo = time.time()
+                        tiempo_ultimo_comando = time.time()
                         continue
                 except Exception:
                     try:
@@ -161,8 +179,8 @@ def escuchar_continuo(callback_ui=None):
                     if callback_ui and jarvis_activo:
                         callback_ui("esperando", energia, conf)
                     
-                    # Umbral bajado (0.40) para hacer a Jarvis más sensible (antes 0.55)
-                    if conf > 0.40:
+                    # Umbral bajado (0.15) para hacer a Jarvis súper sensible (antes 0.40)
+                    if conf > 0.15:
                         # ¡Wake word detectado!
                         if not jarvis_activo:
                             # Estaba hibernando, despertar sistemas
@@ -197,6 +215,31 @@ def escuchar_continuo(callback_ui=None):
                             max_energia_grabada = 0.0
                             ultimo_sonido = time.time()
                             inicio_grabacion = time.time()
+                            
+                elif estado_escucha == "esperando_conversacion":
+                    energia = calcular_energia(bloque)
+                    
+                    if callback_ui and jarvis_activo:
+                        callback_ui("esperando", energia, 0.0)
+                        
+                    if time.time() - tiempo_ultimo_comando > 15.0:
+                        estado_escucha = "esperando_wake"
+                        print("\n[🔇] Micrófono cerrado por inactividad. Esperando: 'Jarvis'\n")
+                        try:
+                            import winsound
+                            winsound.Beep(500, 100)
+                            winsound.Beep(400, 150)
+                        except:
+                            pass
+                        continue
+                        
+                    if energia > UMBRAL_VOZ:
+                        print(f"\n[MIC] Conversación detectada (Energía: {energia:.0f}). Grabando...")
+                        estado_escucha = "grabando_comando"
+                        audio_chunks = []
+                        max_energia_grabada = energia
+                        ultimo_sonido = time.time()
+                        inicio_grabacion = time.time()
                             
                 elif estado_escucha == "grabando_comando":
                     energia = calcular_energia(bloque)
@@ -242,12 +285,15 @@ def escuchar_continuo(callback_ui=None):
                                     print(f"\n[💤] Jarvis en HIBERNACIÓN. Esperando: 'Jarvis'\n")
                                 else:
                                     # Procesar comando normal
-                                    enviar_comando_a_cerebro(texto)
+                                    comando_final = obtener_contexto_pantalla() + texto
+                                    enviar_comando_a_cerebro(comando_final)
                             else:
                                 print("[⚙️] Transcripción vacía. Posible silencio o corte prematuro.")
                         
-                        # Limpiar y regresar a la espera de wake word
-                        estado_escucha = "esperando_wake"
+                        # Limpiar y regresar a la espera de conversación
+                        estado_escucha = "esperando_conversacion"
+                        tiempo_ultimo_comando = time.time()
+                        print("\n[🎙️] Micrófono abierto por 15 segundos...")
                             
                         while not q.empty():
                             q.get()
@@ -271,7 +317,8 @@ def transcribir_audio(audio_completo):
     try:
         transcription = client.audio.transcriptions.create(
             file=wav_io,
-            model="whisper-large-v3-turbo"
+            model="whisper-large-v3-turbo",
+            language="es"
         )
         texto = transcription.text.strip()
         
@@ -313,7 +360,7 @@ def enviar_comando_a_cerebro(texto):
     """Envía el texto transcrito al servidor FastAPI local."""
     try:
         respuesta = httpx.post(
-            "http://127.0.0.1:14782/api/command", 
+            f"http://{JARVIS_SERVER_IP}:14782/api/command", 
             json={"command": texto},
             timeout=30.0
         )

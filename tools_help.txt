@@ -1,0 +1,98 @@
+Python Library Documentation: module pythonclaw.core.tools in pythonclaw.core
+
+NNAAMMEE
+    pythonclaw.core.tools - Built-in tool implementations and OpenAI-compatible schemas.
+
+DDEESSCCRRIIPPTTIIOONN
+    Structure
+    ---------
+      PRIMITIVE_TOOLS   — run_command / read_file / write_file / list_files (always available)
+      SKILL_TOOLS       — use_skill / list_skill_resources (always available)
+      META_SKILL_TOOLS  — create_skill (always available — "god mode" skill creation)
+      MEMORY_TOOLS      — remember / recall (always available)
+      WEB_SEARCH_TOOL   — web_search (only when Tavily API key is configured)
+      KNOWLEDGE_TOOL    — consult_knowledge_base (only when a RAG index is loaded)
+      CRON_TOOLS        — cron_add / cron_remove / cron_list (only when CronScheduler is injected)
+
+    Agent._build_tools() assembles the right subset per session.
+
+FFUUNNCCTTIIOONNSS
+    ccoonnffiigguurree__vveennvv(venv_dir: str | None = None) -> str | None
+        Explicitly set or auto-detect the venv. Called by Agent.__init__.
+
+    ccrreeaattee__sskkiillll(
+        name: str,
+        description: str,
+        instructions: str,
+        category: str = '',
+        resources: dict[str, str] | None = None,
+        dependencies: list[str] | None = None
+    ) -> str
+        Create a new skill on disk and install its dependencies.
+
+        This is the "god mode" tool — the agent uses it to extend its own
+        capabilities at runtime.  After creation, the caller must invalidate
+        the SkillRegistry cache so the new skill appears in the catalog.
+
+        All paths are validated against the sandbox.  Resource filenames are
+        sanitized to prevent directory traversal.
+
+    lliisstt__ffiilleess(path: str = '.') -> str
+        List files in a directory, one per line.
+
+    rreeaadd__ffiillee(path: str) -> str
+        Read and return the contents of a file.
+
+    rruunn__ccoommmmaanndd(command: str) -> str
+        Execute a shell command and return combined stdout/stderr.
+
+        The command inherits the project's virtual environment so that
+        ``python``, ``pip``, and any installed CLI tools resolve correctly.
+        The working directory is set to ``~/.pythonclaw/context/files/`` so
+        that any files created or downloaded by the command land there.
+
+    sseenndd__ffiillee(path: str, caption: str = '') -> str
+        Send a file to the user via the active channel (Telegram/Discord/WhatsApp/Web).
+
+    sseett__ffiillee__sseennddeerr(fn: callable | None) -> None
+        Register a callback for sending files to the current channel.
+
+    sseett__ssaannddbbooxx(roots: list[str]) -> None
+        Configure the allowed root directories for file-write operations.
+
+        Called by Agent.__init__ to restrict write_file / create_skill to the
+        project's working tree.  An empty list disables sandboxing (not recommended).
+
+    wweebb__sseeaarrcchh(
+        query: str,
+        *,
+        search_depth: str = 'basic',
+        topic: str = 'general',
+        max_results: int = 3,
+        time_range: str | None = None,
+        include_domains: list[str] | None = None,
+        exclude_domains: list[str] | None = None
+    ) -> str
+        Search the web using the Tavily API and return formatted results.
+
+    wwrriittee__ffiillee(path: str, content: str) -> str
+        Write content to a file, creating parent directories as needed.
+
+        Writes are restricted to sandbox directories (configured via set_sandbox).
+
+DDAATTAA
+    AAVVAAIILLAABBLLEE__TTOOOOLLSS = {'create_skill': <function create_skill>, 'list_file...
+    CCRROONN__TTOOOOLLSS = [{'function': {'description': "Schedule a recurring LLM t...
+    KKNNOOWWLLEEDDGGEE__TTOOOOLL = {'function': {'description': 'Search the knowledge ba...
+    MMEEMMOORRYY__TTOOOOLLSS = [{'function': {'description': 'Store a piece of informa...
+    MMEETTAA__SSKKIILLLL__TTOOOOLLSS = [{'function': {'description': "Create a brand-new s...
+    PPRRIIMMIITTIIVVEE__TTOOOOLLSS = [{'function': {'description': 'Execute a shell comma...
+    SSKKIILLLL__TTOOOOLLSS = [{'function': {'description': "Activate a skill by name....
+    WWEEBB__SSEEAARRCCHH__TTOOOOLL = {'function': {'description': 'Search the web for rea...
+    ____aannnnoottaattiioonnss____ = {'AVAILABLE_TOOLS': 'dict[str, callable]', 'CRON_TOO...
+    ____ccoonnddiittiioonnaall__aannnnoottaattiioonnss____ = set()
+    llooggggeerr = <Logger pythonclaw.core.tools (WARNING)>
+
+FFIILLEE
+    c:\users\mati0\appdata\local\python\pythoncore-3.14-64\lib\site-packages\pythonclaw\core\tools.py
+

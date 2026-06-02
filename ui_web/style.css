@@ -1,0 +1,148 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #5abcb9; /* Color turquesa de BMO */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+}
+
+.bmo-body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #5abcb9;
+}
+
+.bmo-screen {
+    width: 80vw;
+    height: 60vh;
+    background-color: #c9e2b1; /* Color verde claro de la pantalla */
+    border-radius: 40px;
+    border: 15px solid #2c444e; /* Borde oscuro de la pantalla */
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* La Cara */
+.face {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Ojos */
+.eyes {
+    display: flex;
+    justify-content: space-between;
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+.eye {
+    width: 25px;
+    height: 35px;
+    background-color: #1a1a1a;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+/* Boca */
+.mouth {
+    width: 60px;
+    height: 20px;
+    border-bottom: 6px solid #1a1a1a;
+    border-radius: 0 0 50px 50px;
+    transition: all 0.2s ease;
+}
+
+/* Texto de estado */
+.status-text {
+    position: absolute;
+    bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* =========================================
+   ESTADOS DE ANIMACIÓN
+   ========================================= */
+
+/* Esperando (Blinking) */
+.state-esperando .eye {
+    animation: blink 4s infinite;
+}
+
+@keyframes blink {
+    0%, 96%, 98%, 100% { height: 35px; transform: translateY(0); }
+    97%, 99% { height: 4px; transform: translateY(15px); }
+}
+
+/* Grabando (Ojos grandes de emoción/escucha) */
+.state-grabando .eye {
+    width: 35px;
+    height: 45px;
+    border-radius: 50%;
+}
+.state-grabando .mouth {
+    width: 40px;
+    height: 30px;
+    border: 6px solid #1a1a1a;
+    border-radius: 50%;
+    background-color: #ff9999;
+}
+
+/* Pensando (Ojos mirando de lado a lado) */
+.state-pensando .eye {
+    animation: look-around 2s infinite alternate;
+}
+.state-pensando .mouth {
+    width: 30px;
+    border-bottom: 6px solid #1a1a1a;
+    border-radius: 0;
+}
+
+@keyframes look-around {
+    0%, 20% { transform: translateX(-15px); }
+    80%, 100% { transform: translateX(15px); }
+}
+
+/* Hablando (Boca moviéndose) */
+.state-hablando .mouth {
+    animation: talk 0.3s infinite alternate;
+}
+
+@keyframes talk {
+    0% { height: 10px; width: 50px; border-radius: 0 0 30px 30px; }
+    100% { height: 35px; width: 40px; border-radius: 50px; border: 6px solid #1a1a1a; background-color: #333; }
+}
+
+/* Hibernando (Ojos cerrados) */
+.state-hibernando .bmo-screen {
+    background-color: #8da477;
+}
+.state-hibernando .eye {
+    height: 6px;
+    transform: translateY(15px);
+    border-radius: 10px;
+}
+.state-hibernando .mouth {
+    width: 30px;
+    border-bottom: 6px solid #1a1a1a;
+    border-radius: 0;
+}

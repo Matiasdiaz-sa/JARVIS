@@ -168,6 +168,17 @@ def controlar_sistema(accion: str, parametro: str = "", contenido: str = "", con
                 
             programa = parametro.lower()
             
+            # Si el usuario pide cerrar una pestaña, simplemente enviamos el atajo Ctrl+W
+            if "pestaña" in programa or "tab" in programa:
+                try:
+                    import pyautogui
+                    pyautogui.hotkey('ctrl', 'w')
+                    print("[Sistema] Cerrando pestaña activa con Ctrl+W")
+                    return "Pestaña cerrada con éxito."
+                except ImportError:
+                    return "Error: Falta la librería pyautogui para cerrar pestañas."
+                except Exception as e:
+                    return f"Error al intentar cerrar la pestaña: {e}"
             # Detección inteligente de programas comunes (soft matching)
             if "chrome" in programa or "google" in programa or "youtube" in programa:
                 exe_name = "chrome.exe"
@@ -209,18 +220,34 @@ def controlar_sistema(accion: str, parametro: str = "", contenido: str = "", con
                 # En su lugar, usamos PowerShell para cerrar solo las ventanas de carpetas (el explorador)
                 # sin matar la barra de tareas ni el escritorio.
                 comando_kill = 'powershell -command "(New-Object -comObject Shell.Application).Windows() | ForEach-Object { $_.Quit() }"'
+                resultado = subprocess.run(comando_kill, shell=True, capture_output=True, text=True)
+                
+                if resultado.returncode == 0:
+                    return f"Programa '{exe_name}' cerrado con éxito."
+                else:
+                    error_msg = resultado.stderr.strip() or resultado.stdout.strip()
+                    print(f"[Error Sistema] {error_msg}")
+                    return f"No se pudo cerrar '{exe_name}'. Windows dice: {error_msg}"
             else:
                 # taskkill en Windows: /IM = Nombre de imagen, /F = Forzar, /T = Cerrar también todos los subprocesos (Chrome crea muchos)
                 comando_kill = f'taskkill /IM "{exe_name}" /F /T'
-            
-            resultado = subprocess.run(comando_kill, shell=True, capture_output=True, text=True)
-            
-            if resultado.returncode == 0:
-                return f"Programa '{exe_name}' cerrado con éxito."
-            else:
-                error_msg = resultado.stderr.strip() or resultado.stdout.strip()
-                print(f"[Error Sistema] {error_msg}")
-                return f"No se pudo cerrar '{exe_name}'. Windows dice: {error_msg}"
+                resultado = subprocess.run(comando_kill, shell=True, capture_output=True, text=True)
+                
+                if resultado.returncode == 0:
+                    return f"Programa '{exe_name}' cerrado con éxito."
+                else:
+                    # Intento 2: Usar PowerShell agresivo
+                    nombre_ps = exe_name.replace(".exe", "")
+                    comando_ps = f'powershell -command "Stop-Process -Name \'{nombre_ps}\' -Force"'
+                    resultado_ps = subprocess.run(comando_ps, shell=True, capture_output=True, text=True)
+                    
+                    if resultado_ps.returncode == 0:
+                        return f"Programa '{exe_name}' cerrado con éxito (vía PowerShell)."
+                    else:
+                        error_msg = resultado.stderr.strip() or resultado.stdout.strip()
+                        error_ps = resultado_ps.stderr.strip() or resultado_ps.stdout.strip()
+                        print(f"[Error Sistema] Taskkill: {error_msg} | PS: {error_ps}")
+                        return f"No se pudo cerrar '{exe_name}'. Es posible que requiera permisos de administrador."
                 
         elif accion == "leer_texto_seleccionado":
             try:
