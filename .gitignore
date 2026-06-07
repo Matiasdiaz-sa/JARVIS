@@ -12,3 +12,5 @@ __pycache__/
 
 # Otros archivos locales
 *.log
+*.zip
+memoria*.json

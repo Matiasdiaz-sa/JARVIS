@@ -1,75 +1,67 @@
 [
   {
     "role": "user",
-    "content": "Cerrán, tira, Beti"
-  },
-  {
-    "role": "assistant",
-    "content": "A la orden. Widget(s) cerrado(s) correctamente. Y además, No se pudo cerrar 'beti.exe'. Windows dice: ERROR: no se encontr¢ el proceso \"beti.exe\"."
+    "content": "¿Cómo está tu cerebro?"
   },
   {
     "role": "user",
-    "content": "Abrí el EA Sport FC26 desde el escritorio"
-  },
-  {
-    "role": "assistant",
-    "content": "A la orden. Hice clic exitosamente en 'icono de EA Sports FC 26 en el escritorio'."
+    "content": "Thank you."
   },
   {
     "role": "user",
-    "content": "Abrí el EA Sport 26."
-  },
-  {
-    "role": "assistant",
-    "content": "A la orden. No pude encontrar 'icono de EA Sports FC 26 en el escritorio' en la pantalla actual."
+    "content": "Thank you."
   },
   {
     "role": "user",
-    "content": "Abrí Google Chrome y buscá en Temu billeteras."
-  },
-  {
-    "role": "assistant",
-    "content": "Señor, encontré problemas al ejecutar la acción: Lo siento señor, ocurrió un error interno al intentar realizar esa acción en el sistema."
+    "content": "Thank you."
   },
   {
     "role": "user",
-    "content": "Abre Google."
-  },
-  {
-    "role": "assistant",
-    "content": "A la orden. Navegador abierto en https://www.google.com."
+    "content": "Thank you."
   },
   {
     "role": "user",
-    "content": "Buscá en Google ahora Temu."
-  },
-  {
-    "role": "assistant",
-    "content": "A la orden. Buscando 'Temu' en Google (nueva pestaña)."
+    "content": "Apaga la PC"
   },
   {
     "role": "user",
-    "content": "abrí el link de Temu el primero que sale"
-  },
-  {
-    "role": "assistant",
-    "content": "Entiendo que estás buscando la billetera más graciosa en internet. Sin embargo, como modelo de lenguaje, no puedo acceder a internet en tiempo real para reproducir videos o abrir enlaces. También no puedo seleccionar qué video es el \"más gracioso\" ya que esto es subjetivo y puede variar de persona a persona. Si tienes un enlace específico que crees que es muy gracioso, puedo ayudarte a abrirlo en tu navegador web.\n\nSi deseas reproducir un video en YouTube, puedes buscarlo en el sitio web de YouTube o utilizar la herramienta de reproducción de YouTube en el sitio web Temu.\n\nSi necesitas ayuda con una tarea específica, por favor indícame exactamente qué necesitas ayuda y haré lo posible por ayudarte.\n"
+    "content": "Thank you."
   },
   {
     "role": "user",
-    "content": "abrí mostrame tus tres modos cerebros"
-  },
-  {
-    "role": "assistant",
-    "content": "Lo siento señor, pero mis cerebros se colapsaron intentando procesar la información."
+    "content": "¿Me escuchas?"
   },
   {
     "role": "user",
-    "content": "seragut"
+    "content": "¿Me escuchas?"
+  },
+  {
+    "role": "user",
+    "content": "Thank you."
+  },
+  {
+    "role": "user",
+    "content": "Abrí Google Chrome."
+  },
+  {
+    "role": "user",
+    "content": "Thank you."
+  },
+  {
+    "role": "user",
+    "content": "Thank you."
+  },
+  {
+    "role": "user",
+    "content": "Thank you."
+  },
+  {
+    "role": "user",
+    "content": "¿Me escuchas bien? Todo tranqui"
   },
   {
     "role": "assistant",
-    "content": "Lo siento señor, pero mis cerebros se colapsaron intentando procesar la información."
+    "content": "A la orden. Programa 'Google Chrome' iniciado."
   },
   {
     "role": "user",
@@ -77,6 +69,10 @@
   },
   {
     "role": "assistant",
-    "content": "You're welcome, Villarviz. If you need anything else, just let me know. 😏"
+    "content": "A la orden. Programa 'Google Chrome' iniciado."
+  },
+  {
+    "role": "user",
+    "content": "Thank you."
   }
 ]

@@ -74,7 +74,6 @@ def escuchar_continuo(callback_ui=None):
     logging.getLogger().setLevel(logging.ERROR)
     
     from openwakeword.model import Model
-    import winsound
     import os
     
     print("[Reconocimiento] Cargando modelo predeterminado 'hey_jarvis'...")

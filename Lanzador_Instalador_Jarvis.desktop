@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=true
+Exec=bash -c "$(dirname %k)/instalar_jarvis.sh"
+Name=Instalar Jarvis OS
+Comment=Doble clic para instalar Jarvis en esta computadora
+Icon=system-software-install
